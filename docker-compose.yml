@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:latest
-    container_name: postgres
+    container_name: postgres_graph
     ports:
       - "5432:5432"
     environment:
@@ -13,3 +13,83 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  es_master:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+    container_name: es_master
+    networks:
+      - esnet
+    ports:
+      - 9200:9200
+    volumes:
+      - esdata1:/usr/share/elasticsearch/data
+    environment:
+      - node.name=es_master
+      - cluster.name=elasticsearch_cluster
+      - discovery.seed_hosts=es_slave1,es_slave2
+      - cluster.initial_master_nodes=es_master,es_slave1,es_slave2
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "xpack.security.enabled=false"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9200" ]
+      interval: 30s
+      timeout: 20s
+      retries: 10
+
+  es_slave1:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+    container_name: es_slave1
+    networks:
+      - esnet
+    ports:
+      - 9201:9200
+    volumes:
+      - esdata2:/usr/share/elasticsearch/data
+    environment:
+      - node.name=es_slave1
+      - cluster.name=elasticsearch_cluster
+      - discovery.seed_hosts=es_master,es_slave2
+      - cluster.initial_master_nodes=es_master,es_slave1,es_slave2
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "xpack.security.enabled=false"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+  es_slave2:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+    container_name: es_slave2
+    networks:
+      - esnet
+    ports:
+      - 9202:9200
+    volumes:
+      - esdata3:/usr/share/elasticsearch/data
+    environment:
+      - node.name=es_slave2
+      - cluster.name=elasticsearch_cluster
+      - discovery.seed_hosts=es_master,es_slave1
+      - cluster.initial_master_nodes=es_master,es_slave1,es_slave2
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "xpack.security.enabled=false"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+volumes:
+  esdata1:
+    driver: local
+  esdata2:
+    driver: local
+  esdata3:
+    driver: local
+networks:
+  esnet:
+    driver: bridge

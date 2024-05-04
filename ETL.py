@@ -47,20 +47,38 @@ def distinct_id(rows):
 def export_json(conn, cur, distinct):
     data_dict = {}
     tmps = list(distinct)
-    df = pd.DataFrame(tmps, columns=['id'])
-    print(df)
-    # for tmp in tmps:
-    #     cur.execute("""
-    #         SELECT *
-    #         FROM nodes
-    #         WHERE id = %s
-    #     """, (str(tmp))
-    #     )
-    #     row = cur.fetchone()
-    #     data_dict[str(tmp)] = row[1]
-    #
-    # conn.commit()
-    # print(data_dict)
+
+    # Select the end node as the key
+    cur.execute("""
+        SELECT name FROM nodes WHERE id = %s
+    """, (tmps[-1],))
+
+    k = cur.fetchone()  # Retrieve the result
+    k = ''.join(k)  # Convert the tuple to string
+
+    for i in range(len(tmps) - 1):
+        cur.execute("""
+            SELECT  name FROM nodes WHERE id = %s
+        """, (tmps[i],))
+        v = cur.fetchone()
+        v = ''.join(v)
+        # print(v)
+        cur.execute("""
+            SELECT * FROM {}
+        """.format(v)
+        )
+        # Get the column headers
+        column_headers = [desc[0] for desc in cur.description]
+        column_headers = column_headers[1:]
+        print(column_headers)
+
+        data = cur.fetchone()
+        data_dict[v] = data[1:]
+    print(data_dict)
+
+
+
+
 
 if __name__ == '__main__':
     conn = psycopg2.connect(
