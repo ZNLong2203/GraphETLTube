@@ -1,7 +1,10 @@
+import datetime
 import psycopg2
+import json
 import numpy as np
 import pandas as pd
 from pyspark.sql import SparkSession
+from datetime import date
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType
 import pyspark.sql.functions as F
 
@@ -44,8 +47,9 @@ def distinct_id(rows):
     # print(distinct)
     return distinct
 
-def export_json(conn, cur, distinct):
+def json_format(conn, cur, distinct):
     data_dict = {}
+    tbl_dict = {}
     tmps = list(distinct)
 
     # Select the end node as the key
@@ -53,34 +57,64 @@ def export_json(conn, cur, distinct):
         SELECT name FROM nodes WHERE id = %s
     """, (tmps[-1],))
 
-    k = cur.fetchone()  # Retrieve the result
-    k = ''.join(k)  # Convert the tuple to string
+    end_node = cur.fetchone()  # Retrieve the result
+    end_node = ''.join(end_node)  # Convert the tuple to string
 
     for i in range(len(tmps) - 1):
+        # Select each node (table name)
         cur.execute("""
             SELECT  name FROM nodes WHERE id = %s
         """, (tmps[i],))
-        v = cur.fetchone()
-        v = ''.join(v)
+        node = cur.fetchone()
+        node = ''.join(node)
         # print(v)
+
+        # Select all the data from the table
         cur.execute("""
             SELECT * FROM {}
-        """.format(v)
+        """.format(node)
         )
+        data = cur.fetchone()
+
         # Get the column headers
         column_headers = [desc[0] for desc in cur.description]
         column_headers = column_headers[1:]
-        print(column_headers)
+        # print(column_headers)
 
-        data = cur.fetchone()
-        data_dict[v] = data[1:]
+        for j in range(len(data) - 1):
+            tbl_dict[column_headers[j]] = data[j]
+
+    data_dict[end_node] = tbl_dict
     print(data_dict)
+    return data_dict
 
+def export_json(data_dict):
+    # Create a spark session
+    spark = SparkSession.builder.master("local[*]").appName("ETL").getOrCreate()
+    spark.sparkContext.setLogLevel("INFO")
 
+    # Conver datetime to string
+    for key, value in data_dict.items():
+        for k, v in value.items():
+            if isinstance(v, datetime.date):
+                value[k] = v.strftime('%Y-%m-%d')
 
+    # Convert data_dict to a list of tuples
+    data_tuples = [(json.dumps({key: json.dumps(value)}),) for key, value in data_dict.items()]
 
+    # Define the schema for the DataFrame
+    schema = StructType([
+        StructField("data", StringType())
+    ])
+
+    # Create DataFrame from the list of tuples and schema
+    df = spark.createDataFrame(data_tuples, schema=schema)
+
+    # Write the dataframe to a json file
+    df.write.json('data.json', mode='overwrite')
 
 if __name__ == '__main__':
+    # Create a connection to the postgres database
     conn = psycopg2.connect(
         host='localhost',
         dbname='graph',
@@ -91,4 +125,6 @@ if __name__ == '__main__':
 
     rows = find_all_path(conn, cur, 1, 5)
     distinct = distinct_id(rows)
-    export_json(conn, cur, distinct)
+    data_dict = json_format(conn, cur, distinct)
+    export_json(data_dict)
+
