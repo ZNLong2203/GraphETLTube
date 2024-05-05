@@ -89,11 +89,6 @@ def json_format(conn, cur, distinct):
     print(data_dict)
     return data_dict
 
-import json
-import datetime
-from pyspark.sql import SparkSession
-from pyspark.sql.types import StructType, StructField, StringType
-
 def export_json(data_dict):
     # Create a Spark session
     # spark = SparkSession.builder.master("local[*]").appName("ETL").getOrCreate()
@@ -112,9 +107,6 @@ def export_json(data_dict):
     with open('data.json', 'w') as f:
         for data in data_tuples:
             f.write(data[0] + '\n')
-
-
-
 
 if __name__ == '__main__':
     # Create a connection to the postgres database
