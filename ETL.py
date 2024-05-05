@@ -1,4 +1,5 @@
 import datetime
+import re
 import psycopg2
 import json
 import numpy as np
@@ -82,36 +83,38 @@ def json_format(conn, cur, distinct):
         # print(column_headers)
 
         for j in range(len(data) - 1):
-            tbl_dict[column_headers[j]] = data[j]
+            tbl_dict[column_headers[j]] = data[j+1]
 
     data_dict[end_node] = tbl_dict
     print(data_dict)
     return data_dict
 
-def export_json(data_dict):
-    # Create a spark session
-    spark = SparkSession.builder.master("local[*]").appName("ETL").getOrCreate()
-    spark.sparkContext.setLogLevel("INFO")
+import json
+import datetime
+from pyspark.sql import SparkSession
+from pyspark.sql.types import StructType, StructField, StringType
 
-    # Conver datetime to string
+def export_json(data_dict):
+    # Create a Spark session
+    # spark = SparkSession.builder.master("local[*]").appName("ETL").getOrCreate()
+    # spark.sparkContext.setLogLevel("INFO")
+
+    # Convert datetime to string
     for key, value in data_dict.items():
         for k, v in value.items():
             if isinstance(v, datetime.date):
                 value[k] = v.strftime('%Y-%m-%d')
 
     # Convert data_dict to a list of tuples
-    data_tuples = [(json.dumps({key: json.dumps(value)}),) for key, value in data_dict.items()]
+    data_tuples = [(json.dumps({key: value}, indent=4),) for key, value in data_dict.items()]
 
-    # Define the schema for the DataFrame
-    schema = StructType([
-        StructField("data", StringType())
-    ])
+    # Write to json file
+    with open('data.json', 'w') as f:
+        for data in data_tuples:
+            f.write(data[0] + '\n')
 
-    # Create DataFrame from the list of tuples and schema
-    df = spark.createDataFrame(data_tuples, schema=schema)
 
-    # Write the dataframe to a json file
-    df.write.json('data.json', mode='overwrite')
+
 
 if __name__ == '__main__':
     # Create a connection to the postgres database

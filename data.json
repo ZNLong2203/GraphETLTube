@@ -1,0 +1,16 @@
+{
+    "node_drug": {
+        "name": "Nguyen Van A",
+        "age": 20,
+        "dob": "2000-01-01",
+        "address": "Ha Noi",
+        "phone": "0123456789",
+        "allergy_1": "Weather",
+        "allergy_2": "Beef",
+        "allergy_3": "Essential oil",
+        "description": "Have many allergies",
+        "disease_1": "Fever",
+        "disease_2": "Headache",
+        "disease_3": "Tired"
+    }
+}
