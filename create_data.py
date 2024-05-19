@@ -22,6 +22,15 @@ def create_table(conn, cur):
     """)
 
     cur.execute("""
+        CREATE TABLE IF NOT EXISTS node_program (
+            id SERIAL PRIMARY KEY,
+            project_id VARCHAR(255),
+            submitter_id VARCHAR(255),
+            program_name VARCHAR(255)
+        )
+    """)
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS node_information (
             id SERIAL PRIMARY KEY,
             name VARCHAR(255),
@@ -59,21 +68,12 @@ def create_table(conn, cur):
         )
     """)
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS node_drug (
-            id SERIAL PRIMARY KEY,
-            drug_1 VARCHAR(255),
-            drug_2 VARCHAR(255),
-            drug_3 VARCHAR(255),
-            description VARCHAR(255)
-        )
-    """)
     conn.commit()
 
 def insert_data(conn, cur):
     cur.execute("""
         INSERT INTO nodes (name)
-        VALUES ('node_information'), ('node_allergy'), ('node_medical_history'), ('node_report'), ('node_drug')
+        VALUES ('node_program'), ('node_information'), ('node_allergy'), ('node_medical_history'), ('node_report')
     """)
 
     cur.execute("""
@@ -83,6 +83,11 @@ def insert_data(conn, cur):
     conn.commit()
 
 def insert_node(conn, cur):
+    cur.execute("""
+        INSERT INTO node_program (project_id, submitter_id, program_name)
+        VALUES ('WEGMIW234', 'BMOTRHOTKR42', 'Test')
+    """)
+
     cur.execute("""
         INSERT INTO node_information (name, age, dob, address, phone)
         VALUES ('Nguyen Van A', 20, '2000-01-01', 'Ha Noi', '0123456789')
@@ -103,21 +108,17 @@ def insert_node(conn, cur):
         VALUES ('Have many allergies')
     """)
 
-    cur.execute("""
-        INSERT INTO node_drug (drug_1, drug_2, drug_3, description)
-        VALUES ('Drug 1', 'Drug 2', 'Drug 3', Null)
-    """)
     conn.commit()
 
 if __name__ == '__main__':
     conn = psycopg2.connect(
         host='localhost',
-        dbname='graph',
+        dbname='postgres',
         user='postgres',
-        password='postgres'
+        password='test'
     )
     cur = conn.cursor()
 
     create_table(conn, cur)
-    # insert_data(conn, cur)
-    # insert_node(conn, cur)
+    insert_data(conn, cur)
+    insert_node(conn, cur)

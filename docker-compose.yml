@@ -1,20 +1,20 @@
 services:
-  postgres:
-    image: postgres:latest
-    container_name: postgres_graph
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: graph
-    healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "postgres" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+#  postgres:
+#    image: postgres:latest
+#    container_name: postgres_graph
+#    ports:
+#      - "5432:5432"
+#    environment:
+#      POSTGRES_USER: postgres
+#      POSTGRES_PASSWORD: postgres
+#      POSTGRES_DB: graph
+#    healthcheck:
+#      test: [ "CMD", "pg_isready", "-U", "postgres" ]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
   es_master:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
     container_name: es_master
     networks:
       - esnet
@@ -41,7 +41,7 @@ services:
       retries: 10
 
   es_slave1:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
     container_name: es_slave1
     networks:
       - esnet
@@ -63,7 +63,7 @@ services:
         hard: -1
 
   es_slave2:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
     container_name: es_slave2
     networks:
       - esnet
