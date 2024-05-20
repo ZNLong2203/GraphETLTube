@@ -1,52 +1,42 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, LongType
-from pyspark.sql.functions import from_json
+from pyspark.sql.functions import col
 
-if __name__ == "__main__":
-    # Initialize Spark session
-    spark = (SparkSession.builder.appName("ElasticSearch")
-             .master("local")
-             .config("spark.jars.packages", "org.elasticsearch:elasticsearch-spark-30_2.12:8.13.4")
-             .config("spark.es.nodes", "localhost")
-             .config("spark.es.port", "9200")
-             .config("spark.es.nodes.wan.only", "true")
-             .getOrCreate())
+# Create Spark session
+spark = SparkSession.builder \
+    .appName("Load JSON to Elasticsearch") \
+    .config("spark.es.nodes", "localhost") \
+    .config("spark.es.port", "9200") \
+    .config("spark.es.nodes.wan.only", "true") \
+    .getOrCreate()
 
-    # Define schema for the inner "node_report" object
-    schema = StructType([
-        StructField("project_id", StringType(), True),
-        StructField("submitter_id", StringType(), True),
-        StructField("program_name", StringType(), True),
-        StructField("name", StringType(), True),
-        StructField("age", IntegerType(), True),
-        StructField("dob", StringType(), True),
-        StructField("address", StringType(), True),
-        StructField("phone", StringType(), True),
-        StructField("allergy_1", StringType(), True),
-        StructField("allergy_2", StringType(), True),
-        StructField("allergy_3", StringType(), True),
-        StructField("description", StringType(), True),
-        StructField("disease_1", StringType(), True),
-        StructField("disease_2", StringType(), True),
-        StructField("disease_3", StringType(), True),
-    ])
+# Set log level to ERROR to reduce log verbosity
+spark.sparkContext.setLogLevel("ERROR")
 
-    # Read the JSON file
-    df = spark.read.option("multiline", "true").json("data.json")
+# Read the JSON data from file into a DataFrame
+df = spark.read.option("multiline", "true").json("data.json")
 
-    # Parse the "node_report" JSON string into a struct
-    df = df.withColumn("node_report_struct", from_json(df["node_report"].cast("string"), schema))
+# Inspect the schema to ensure it is loaded correctly
+df.printSchema()
+df.show(truncate=False)
 
-    # Select fields from the struct
-    df = df.select("node_report_struct.*")
+# Extract the fields in the order they appear in the JSON
+fields = df.schema["node_report"].dataType.fields
 
-    # Cache the DataFrame
-    df.cache()
+# Dynamically select columns in the exact order they appear in the JSON
+df_flat = df.select([col(f"node_report.{field.name}").alias(field.name) for field in fields])
 
-    # Write DataFrame to Elasticsearch
-    df.write.format("org.elasticsearch.spark.sql") \
-        .option("es.nodes", "localhost") \
-        .option("es.port", "9200") \
-        .option("es.resource", "test") \
-        .mode("overwrite") \
-        .save()
+# Print flattened DataFrame schema and content for debugging
+df_flat.printSchema()
+df_flat.show(truncate=False)
+
+# Write the flattened DataFrame to Elasticsearch
+df_flat.write \
+    .format("org.elasticsearch.spark.sql") \
+    .option("es.resource", "test") \
+    .option("es.nodes", "localhost") \
+    .option("es.port", "9200") \
+    .mode("overwrite") \
+    .save()
+
+# Stop the Spark session
+spark.stop()
