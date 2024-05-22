@@ -137,3 +137,6 @@ coverage.xml
 # jwt keys
 keys/*.pem
 tests/integration/resources/keys/*.pem
+
+.idea
+.github

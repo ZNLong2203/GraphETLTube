@@ -22,6 +22,8 @@ services:
       - "81:80"
     volumes:
       - ./creds.json:/var/www/sheepdog/creds.json
+    environment:
+      - DATABASE_URL=postgres://postgres:test@postgres:5432/postgres
     networks:
       - sheepdog_network
     depends_on:
