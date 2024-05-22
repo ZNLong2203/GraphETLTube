@@ -91,8 +91,8 @@ def json_format(conn, cur, distinct):
 
 def export_json(data_dict):
     # Create a Spark session
-    spark = SparkSession.builder.master("local[*]").appName("ETL").getOrCreate()
-    spark.sparkContext.setLogLevel("INFO")
+    # spark = SparkSession.builder.master("local[*]").appName("ETL").getOrCreate()
+    # spark.sparkContext.setLogLevel("INFO")
 
     # Convert datetime to string
     for key, value in data_dict.items():
@@ -111,10 +111,10 @@ def export_json(data_dict):
     data_list = [{key: value} for key, value in data_dict.items()]
 
     # Write to json file with spark
-    df = spark.createDataFrame(data_list)
-    df.write.format("json").mode("overwrite").save("data_spark.json")
-
-    spark.stop()
+    # df = spark.createDataFrame(data_list)
+    # df.write.format("json").mode("overwrite").save("data_spark.json")
+    #
+    # spark.stop()
 
 
 if __name__ == '__main__':
