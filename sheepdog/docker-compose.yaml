@@ -1,0 +1,34 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - sheepdog_network
+
+  sheepdog:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sheepdog
+    ports:
+      - "81:80"
+    volumes:
+      - ./creds.json:/var/www/sheepdog/creds.json
+    networks:
+      - sheepdog_network
+    depends_on:
+      - postgres
+
+networks:
+  sheepdog_network:
+
+volumes:
+  postgres_data:
