@@ -19,9 +19,11 @@ services:
       dockerfile: Dockerfile
     container_name: sheepdog
     ports:
-      - "81:80"
+      - "80:80"
     volumes:
       - ./creds.json:/var/www/sheepdog/creds.json
+      - ./sheepdog/bin/confighelper.py:/var/www/sheepdog/bin/confighelper.py
+      - ./sheepdog/bin/settings.py:/var/www/sheepdog/bin/settings.py
     environment:
       - DATABASE_URL=postgres://postgres:test@postgres:5432/postgres
     networks:
@@ -34,3 +36,12 @@ networks:
 
 volumes:
   postgres_data:
+
+
+## docker exec -it sheepdog bash
+# apt-get update && apt-get install -y postgresql-client
+
+## psql -h postgres -U postgres -d postgres
+
+## service postgresql status
+## service postgresql start

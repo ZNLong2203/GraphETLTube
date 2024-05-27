@@ -6,11 +6,17 @@ RUN pip install --upgrade pip poetry
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential libffi-dev musl-dev gcc libxml2-dev libxslt-dev \
     curl bash git vim jq \
+    postgresql-client \
+    postgresql \
     uwsgi-plugin-python3
+
+# Install python-levenshtein
+RUN pip install python-levenshtein
 
 RUN mkdir -p /var/www/$appname \
     && mkdir -p /var/www/.cache/Python-Eggs/ \
     && mkdir /run/nginx/ \
+    && mkdir -p /var/run/gen3/ \
     && ln -sf /dev/stdout /var/log/nginx/access.log \
     && ln -sf /dev/stderr /var/log/nginx/error.log \
     && chown nginx -R /var/www/.cache/Python-Eggs/ \
@@ -39,6 +45,7 @@ RUN poetry config virtualenvs.create false \
 #RUN COMMIT=`git rev-parse HEAD` && echo "COMMIT=\"${COMMIT}\"" >$appname/version_data.py \
 #    && VERSION=`git describe --always --tags` && echo "VERSION=\"${VERSION}\"" >>$appname/version_data.py
 
+RUN chown -R nginx /var/www/$appname
 WORKDIR /var/www/$appname
 
-CMD /dockerrun.sh
+CMD ["/dockerrun.sh"]

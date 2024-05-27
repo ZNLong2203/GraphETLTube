@@ -1,7 +1,10 @@
 {
-  "db_host": "localhost",
+  "db_host": "postgres",
   "db_username": "postgres",
   "db_password": "test",
   "db_database": "postgres",
-  "hostname": "localhost"
+  "fence_host": "postgres",
+  "fence_username": "postgres",
+  "fence_password": "test",
+  "fence_database": "postgres"
 }

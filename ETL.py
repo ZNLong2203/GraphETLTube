@@ -35,8 +35,6 @@ def find_all_path(conn, cur, start_node, end_node):
     ## 5. Choose the path that has the end node
     conn.commit()
     rows = cur.fetchall()
-    # for row in rows:
-    #     print(row[0])
 
     return rows
 
@@ -45,13 +43,22 @@ def distinct_id(rows):
     for row in rows:
         for i in range(len(row[0])):
             distinct.add(row[0][i])
-    # print(distinct)
     return distinct
 
 def json_format(conn, cur, distinct):
     data_dict = {}
     tbl_dict = {}
+    tmp_delete = list(distinct)
     tmps = list(distinct)
+
+    # Remove the optional relationship that connect to the end node
+    for i in range(len(tmp_delete) - 1):
+        cur.execute("""
+            SELECT relationship FROM edges WHERE prev_node = %s AND next_node = %s
+        """, (tmp_delete[i], tmps[-1]))
+        relationship = cur.fetchone()
+        if relationship == "optional":
+            tmps.remove(tmp_delete[i])
 
     # Select the end node as the key
     cur.execute("""
@@ -68,7 +75,6 @@ def json_format(conn, cur, distinct):
         """, (tmps[i],))
         node = cur.fetchone()
         node = ''.join(node)
-        # print(v)
 
         # Select all the data from the table
         cur.execute("""
@@ -90,10 +96,6 @@ def json_format(conn, cur, distinct):
     return data_dict
 
 def export_json(data_dict):
-    # Create a Spark session
-    # spark = SparkSession.builder.master("local[*]").appName("ETL").getOrCreate()
-    # spark.sparkContext.setLogLevel("INFO")
-
     # Convert datetime to string
     for key, value in data_dict.items():
         for k, v in value.items():
@@ -107,15 +109,6 @@ def export_json(data_dict):
     with open('data.json', 'w') as f:
         for data in data_tuples:
             f.write(data[0] + '\n')
-
-    data_list = [{key: value} for key, value in data_dict.items()]
-
-    # Write to json file with spark
-    # df = spark.createDataFrame(data_list)
-    # df.write.format("json").mode("overwrite").save("data_spark.json")
-    #
-    # spark.stop()
-
 
 if __name__ == '__main__':
     # Create a connection to the postgres database

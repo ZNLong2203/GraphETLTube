@@ -1,9 +1,9 @@
 from sheepdog.api import app, app_init
 from os import environ
 import confighelper
+import os
 
 APP_NAME = "sheepdog"
-
 
 def load_json(file_name):
     return confighelper.load_json(file_name, APP_NAME)
@@ -46,6 +46,8 @@ config["PSQL_USER_DB_CONNECTION"] = "postgresql://%s:%s@%s:5432/%s" % tuple(
         for key in ["fence_username", "fence_password", "fence_host", "fence_database"]
     ]
 )
+
+config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 
 config["USER_API"] = "https://%s/user" % conf_data["hostname"]  # for use by authutils
 # use the USER_API URL instead of the public issuer URL to accquire JWT keys

@@ -63,69 +63,59 @@ def app_register_blueprints(app):
 
 def db_init(app):
     app.logger.info("Initializing PsqlGraph driver")
-    connect_args = {}
-    if app.config.get("PSQLGRAPH") and app.config["PSQLGRAPH"].get("sslmode"):
-        connect_args["sslmode"] = app.config["PSQLGRAPH"]["sslmode"]
-    app.db = PsqlGraphDriver(
-        host=app.config["PSQLGRAPH"]["host"],
-        user=app.config["PSQLGRAPH"]["user"],
-        password=app.config["PSQLGRAPH"]["password"],
-        database=app.config["PSQLGRAPH"]["database"],
-        set_flush_timestamps=True,
-        connect_args=connect_args,
-        isolation_level=app.config["PSQLGRAPH"].get(
-            "isolation_level", "READ_COMMITTED"
-        ),
-    )
-    if app.config.get("AUTO_MIGRATE_DATABASE"):
-        migrate_database(app)
+    try:
+        connect_args = {}
+        if app.config.get("PSQLGRAPH") and app.config["PSQLGRAPH"].get("sslmode"):
+            connect_args["sslmode"] = app.config["PSQLGRAPH"]["sslmode"]
+        app.db = PsqlGraphDriver(
+            host=app.config["PSQLGRAPH"]["host"],
+            user=app.config["PSQLGRAPH"]["user"],
+            password=app.config["PSQLGRAPH"]["password"],
+            database=app.config["PSQLGRAPH"]["database"],
+            set_flush_timestamps=True,
+            connect_args=connect_args,
+            isolation_level=app.config["PSQLGRAPH"].get(
+                "isolation_level", "READ_COMMITTED"
+            ),
+        )
+        if app.config.get("AUTO_MIGRATE_DATABASE"):
+            migrate_database(app)
+    except Exception as e:
+        app.logger.error(f"Failed to initialize database: {e}")
+        sys.exit(1)
 
-    app.logger.info("Initializing index client")
-    app.index_client = IndexClient(
-        app.config["INDEX_CLIENT"]["host"],
-        version=app.config["INDEX_CLIENT"]["version"],
-        auth=app.config["INDEX_CLIENT"]["auth"],
-    )
 
 
 def migrate_database(app):
-    # hardcoded read role
+    app.logger.info("Starting database migration")
     read_role = "peregrine"
-    postgres_admin.migrate_transaction_snapshots(app.db)
-    if postgres_admin.check_version(app.db):
-        return
     try:
+        postgres_admin.migrate_transaction_snapshots(app.db)
+        if postgres_admin.check_version(app.db):
+            return
         postgres_admin.create_graph_tables(app.db, timeout=1)
-    except Exception:
+    except Exception as e:
+        app.logger.error(f"Database migration error: {e}")
         if not postgres_admin.check_version(app.db):
             app.logger.exception("ERROR: Fail to migrate database")
             sys.exit(1)
         else:
-            # if the version is already up to date, that means there is
-            # another migration wins, so silently exit
             app.logger.info("The database version matches up. No need to do migration")
             return
-    # check if such role exists
-    # does this need to have a session?
+
     with app.db.session_scope() as session:
         session.connection(execution_options={"isolation_level": "READ COMMITTED"})
-        # TODO: address B608
         r = [
-            i
-            for i in session.execute(
-                "SELECT 1 FROM pg_roles WHERE rolname='{}'".format(read_role)  # nosec
+            i for i in session.execute(
+                "SELECT 1 FROM pg_roles WHERE rolname='{}'".format(read_role)
             )
         ]
     if len(r) != 0:
         try:
             postgres_admin.grant_read_permissions_to_graph(app.db, read_role)
-        except Exception:
-            app.logger.warning(
-                "Fail to grant read permission, continuing anyway. Details:"
-            )
+        except Exception as e:
+            app.logger.warning(f"Failed to grant read permissions: {e}")
             traceback.print_exc()
-            return
-
 
 def app_init(app):
     # Register duplicates only at runtime
