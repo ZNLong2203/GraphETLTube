@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--host", type=str, action="store", default="localhost", help="psql-server host"
+        "--host", type=str, action="store", default="postgres", help="psql-server host"
     )
     parser.add_argument(
         "--port", type=str, action="store", default="5432", help="psql-server port"

@@ -59,7 +59,6 @@ def _get_connection_string(user, password, host, port, database):
         )
     return connect_str
 
-
 def setup_database(  # nosec
     user,
     password,
@@ -107,33 +106,32 @@ def setup_database(  # nosec
     conn = engine.connect()
     conn.execute("commit")
 
-    # Use default db connection to set up schema
-    create_stmt = 'CREATE DATABASE "{database}"'.format(database=database)
     try:
+        create_stmt = 'CREATE DATABASE "{database}"'.format(database=database)
         conn.execute(create_stmt)
+        conn.execute("commit")
+
+        conn.execute("""
+              GRANT CREATE ON SCHEMA public TO test;
+              GRANT USAGE ON SCHEMA public TO test;
+              GRANT ALL PRIVILEGES ON DATABASE postgres TO test;
+              GRANT ALL PRIVILEGES ON SCHEMA public TO test;
+              ALTER ROLE test WITH superuser;
+          """)
+        conn.execute("commit")  # End the transaction here
     except Exception as msg:
         logging.warning("Unable to create database: {}".format(msg))
 
-    if not no_user:
-        try:
-            user_no_host = user if "@" not in user else user.split("@")[0]
-            user_stmt = "CREATE USER {user} WITH PASSWORD '{password}'".format(
-                user=user_no_host, password=password
-            )
-            conn.execute(user_stmt)
-        except Exception as msg:
-            logging.warning("Unable to add user:" + str(msg))
-        # User may already exist - GRANT privs on new db
-        try:
-            perm_stmt = (
-                "GRANT ALL PRIVILEGES ON DATABASE {database} to {user}"
-                "".format(database=database, user=user_no_host)
-            )
-            conn.execute(perm_stmt)
-            conn.execute("commit")
-        except Exception as msg:
-            logging.warning("Unable to GRANT privs to user:" + str(msg))
+    # Granting privileges on the newly created database
+    try:
+        conn.execute(f"GRANT ALL PRIVILEGES ON DATABASE {database} TO {user}")
+        conn.execute(f"GRANT ALL PRIVILEGES ON SCHEMA public TO {user}")
+        conn.execute("commit")
+    except Exception as msg:
+        logging.warning("Unable to grant privileges: {}".format(msg))
+
     conn.close()
+
 
 
 def create_tables(host, port, user, password, database, use_ssl=False):
@@ -197,7 +195,7 @@ def create_indexes(host, port, user, password, database, use_ssl=False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--host", type=str, action="store", default="localhost", help="psql-server host"
+        "--host", type=str, action="store", default="postgres", help="psql-server host"
     )
     parser.add_argument(
         "--port", type=str, action="store", default="5432", help="psql-server port"

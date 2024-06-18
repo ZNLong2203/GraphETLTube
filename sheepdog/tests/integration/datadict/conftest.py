@@ -40,9 +40,9 @@ PATH_TO_SCHEMA_DIR = (
 # update these settings if you want to point to another db
 def pg_config(use_ssl=False, isolation_level=None):
     test_host = (
-        "localhost:" + str(os.environ.get("PGPORT"))
+        "postgres:" + str(os.environ.get("PGPORT"))
         if os.environ.get("PGPORT") is not None
-        else "localhost"
+        else "postgres"
     )
     test_user = "test"
     test_pass = "test"  # nosec
@@ -88,7 +88,7 @@ def app(tmpdir, request):
     indexd_app = get_indexd_app()
 
     indexd_init(*INDEX_CLIENT["auth"])
-    indexd = multiprocessing.Process(target=indexd_app.run, args=["localhost", port])
+    indexd = multiprocessing.Process(target=indexd_app.run, args=["postgres", port])
     indexd.start()
     wait_for_indexd_alive(port)
 

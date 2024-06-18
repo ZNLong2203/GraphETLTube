@@ -3,11 +3,14 @@ from os import environ
 import confighelper
 import os
 
+from confighelper import get_database_url
+
+DATABASE_URL = get_database_url()  # or directly: os.getenv('DATABASE_URL')
+
 APP_NAME = "sheepdog"
 
 def load_json(file_name):
     return confighelper.load_json(file_name, APP_NAME)
-
 
 conf_data = load_json("creds.json")
 config = app.config
@@ -49,8 +52,6 @@ config["PSQL_USER_DB_CONNECTION"] = "postgresql://%s:%s@%s:5432/%s" % tuple(
 
 config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 
-config["USER_API"] = "https://%s/user" % conf_data["hostname"]  # for use by authutils
-# use the USER_API URL instead of the public issuer URL to accquire JWT keys
 config["FORCE_ISSUER"] = True
 config["DICTIONARY_URL"] = environ.get(
     "DICTIONARY_URL",

@@ -2,15 +2,13 @@ FROM quay.io/cdis/python:python3.9-buster-2.0.0
 
 ENV appname=sheepdog
 
-RUN pip install --upgrade pip poetry
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential libffi-dev musl-dev gcc libxml2-dev libxslt-dev \
     curl bash git vim jq \
     postgresql-client \
-    postgresql \
     uwsgi-plugin-python3
 
-# Install python-levenshtein
+RUN pip install --upgrade pip poetry
 RUN pip install python-levenshtein
 
 RUN mkdir -p /var/www/$appname \
@@ -28,6 +26,7 @@ WORKDIR /$appname
 
 COPY poetry.lock pyproject.toml /$appname/
 RUN poetry config virtualenvs.create false \
+    && poetry lock \
     && poetry install -vv --no-root --no-dev --no-interaction \
     && poetry show -v
 
@@ -38,14 +37,12 @@ COPY ./bin/confighelper.py /var/www/$appname/confighelper.py
 COPY dockerrun.sh /$appname/dockerrun.sh
 RUN chmod +x /$appname/dockerrun.sh
 
+RUN ls -al /var/www/$appname
+
 RUN poetry config virtualenvs.create false \
     && poetry install -vv --no-dev --no-interaction \
     && poetry show -v
 
-#RUN COMMIT=`git rev-parse HEAD` && echo "COMMIT=\"${COMMIT}\"" >$appname/version_data.py \
-#    && VERSION=`git describe --always --tags` && echo "VERSION=\"${VERSION}\"" >>$appname/version_data.py
-
-RUN chown -R nginx /var/www/$appname
 WORKDIR /var/www/$appname
 
 CMD ["/dockerrun.sh"]

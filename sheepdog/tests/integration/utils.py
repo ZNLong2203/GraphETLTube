@@ -10,7 +10,7 @@ def get_parent(path):
 
 
 def wait_for_indexd_alive(port):
-    url = "http://localhost:{}/_status".format(port)
+    url = "http://postgres:{}/_status".format(port)
     try:
         requests.get(url)
     except requests.ConnectionError:
@@ -20,7 +20,7 @@ def wait_for_indexd_alive(port):
 
 
 def wait_for_indexd_not_alive(port):
-    url = "http://localhost:{}/_status".format(port)
+    url = "http://postgres:{}/_status".format(port)
     try:
         requests.get(url)
     except requests.ConnectionError:
