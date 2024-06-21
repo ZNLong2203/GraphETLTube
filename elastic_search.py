@@ -20,10 +20,10 @@ df.printSchema()
 df.show(truncate=False)
 
 # Extract the fields in the order they appear in the JSON
-fields = df.schema["node_report"].dataType.fields
+fields = df.schema["report"].dataType.fields
 
 # Dynamically select columns in the exact order they appear in the JSON
-df_flat = df.select([col(f"node_report.{field.name}").alias(field.name) for field in fields])
+df_flat = df.select([col(f"report.{field.name}").alias(field.name) for field in fields])
 
 # Print flattened DataFrame schema and content for debugging
 df_flat.printSchema()

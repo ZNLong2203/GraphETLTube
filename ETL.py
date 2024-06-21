@@ -65,16 +65,15 @@ def json_format(conn, cur, distinct):
         SELECT name FROM nodes WHERE id = %s
     """, (tmps[-1],))
 
-    end_node = cur.fetchone()  # Retrieve the result
-    end_node = ''.join(end_node)  # Convert the tuple to string
+    end_node = cur.fetchone()[0]  # Retrieve the result
+    end_node = end_node[5:]  # Remove the "node_" prefix
 
     for i in range(len(tmps) - 1):
         # Select each node (table name)
         cur.execute("""
             SELECT  name FROM nodes WHERE id = %s
         """, (tmps[i],))
-        node = cur.fetchone()
-        node = ''.join(node)
+        node = cur.fetchone()[0]
 
         # Select all the data from the table
         cur.execute("""
@@ -88,22 +87,32 @@ def json_format(conn, cur, distinct):
         column_headers = column_headers[1:]
         # print(column_headers)
 
+        tmp = {}
         for j in range(len(data) - 1):
-            tbl_dict[column_headers[j]] = data[j+1]
+            tmp[column_headers[j]] = data[j+1]
+
+        node = node[5:]
+        tbl_dict[node] = tmp
 
     data_dict[end_node] = tbl_dict
     print(data_dict)
     return data_dict
 
 def export_json(data_dict):
-    # Convert datetime to string
-    for key, value in data_dict.items():
-        for k, v in value.items():
-            if isinstance(v, datetime.date):
-                value[k] = v.strftime('%Y-%m-%d')
+    # Define a default serializer for the json.dumps() function
+    def default_serializer(obj):
+        if isinstance(obj, (datetime.date, datetime.datetime)):
+            return obj.isoformat()
+        elif isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
 
     # Convert data_dict to a list of tuples
-    data_tuples = [(json.dumps({key: value}, indent=4),) for key, value in data_dict.items()]
+    data_tuples = [(json.dumps({key: value}, indent=4, default=default_serializer),) for key, value in data_dict.items()]
 
     # Write to json file
     with open('data.json', 'w') as f:

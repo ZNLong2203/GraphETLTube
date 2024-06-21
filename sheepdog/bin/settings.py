@@ -4,6 +4,7 @@ import confighelper
 import os
 
 from confighelper import get_database_url
+from confighelper import load_json
 
 DATABASE_URL = get_database_url()  # or directly: os.getenv('DATABASE_URL')
 

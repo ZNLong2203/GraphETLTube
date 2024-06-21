@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN pip install --upgrade pip poetry
 RUN pip install python-levenshtein
+RUN pip install uwsgi
 
 RUN mkdir -p /var/www/$appname \
     && mkdir -p /var/www/.cache/Python-Eggs/ \
@@ -45,4 +46,5 @@ RUN poetry config virtualenvs.create false \
 
 WORKDIR /var/www/$appname
 
+RUN ls
 CMD ["/dockerrun.sh"]

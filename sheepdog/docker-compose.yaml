@@ -36,9 +36,6 @@ networks:
 volumes:
   postgres_data:
 
-## docker exec -it sheepdog bash
-# apt-get update && apt-get install -y postgresql-client
-
 ## psql -h postgres -U postgres -d postgres
 ## GRANT ALL PRIVILEGES ON SCHEMA public TO test;
 # GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO test;

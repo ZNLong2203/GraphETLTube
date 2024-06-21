@@ -6,8 +6,8 @@ services:
 #      - "5432:5432"
 #    environment:
 #      POSTGRES_USER: postgres
-#      POSTGRES_PASSWORD: postgres
-#      POSTGRES_DB: graph
+#      POSTGRES_PASSWORD: test
+#      POSTGRES_DB: postgres
 #    healthcheck:
 #      test: [ "CMD", "pg_isready", "-U", "postgres" ]
 #      interval: 10s

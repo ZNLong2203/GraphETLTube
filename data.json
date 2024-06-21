@@ -1,19 +1,28 @@
 {
-    "node_report": {
-        "project_id": "WEGMIW234",
-        "submitter_id": "BMOTRHOTKR42",
-        "program_name": "Test",
-        "name": "Nguyen Van A",
-        "age": 20,
-        "dob": "2000-01-01",
-        "address": "Ha Noi",
-        "phone": "0123456789",
-        "allergy_1": "Weather",
-        "allergy_2": "Beef",
-        "allergy_3": "Essential oil",
-        "description": null,
-        "disease_1": "Fever",
-        "disease_2": "Headache",
-        "disease_3": "Tired"
+    "report": {
+        "program": {
+            "project_id": "WEGMIW234",
+            "submitter_id": "BMOTRHOTKR42",
+            "program_name": "Test"
+        },
+        "information": {
+            "name": "Nguyen Van A",
+            "age": 20,
+            "dob": "2000-01-01",
+            "address": "Ha Noi",
+            "phone": "0123456789"
+        },
+        "allergy": {
+            "allergy_1": "Weather",
+            "allergy_2": "Beef",
+            "allergy_3": "Essential oil",
+            "description": null
+        },
+        "medical_history": {
+            "disease_1": "Fever",
+            "disease_2": "Headache",
+            "disease_3": "Tired",
+            "description": null
+        }
     }
 }
